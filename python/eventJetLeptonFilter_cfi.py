@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-jetFilter = cms.EDFilter(
-    'jetFilter',
+eventJetLeptonFilter = cms.EDFilter(
+    'eventJetLeptonFilter',
     objectSrc = cms.InputTag("slimmedJetsPuppi")
 )

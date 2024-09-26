@@ -19,7 +19,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
     #input = cms.untracked.int32(options.maxEvents)
-    input = cms.untracked.int32(-1)
+    input = cms.untracked.int32(100)
 )
 process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 
@@ -66,29 +66,28 @@ process.options = cms.untracked.PSet(
 process.schedule = cms.Schedule()
 
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_Prompt_v4', '')
 
 process.raw2digi_step = cms.Path(process.RawToDigi)
 process.schedule.append(process.raw2digi_step)
 
-#from anomalyDetection.analysisSkims.jetFilter_cfi import jetFilter
-#process.jetFilter = jetFilter
-#process.NJetPath = cms.Path(process.jetFilter)
-#process.schedule.append(process.NJetPath)
+from anomalyDetection.analysisSkims.eventJetLeptonFilter_cfi import eventJetLeptonFilter
+process.eventJetLeptonFilter = eventJetLeptonFilter
+process.EventFilterPath = cms.Path(process.eventJetLeptonFilter)
+process.schedule.append(process.EventFilterPath)
 
 process.skimOutput = cms.OutputModule(
     'PoolOutputModule',
     fileName = cms.untracked.string(options.outputFile),
     outputCommands=cms.untracked.vstring(
-        "keep *"
-        # "keep *_*_*_RECO", # keep miniaod contents
-        # "keep caloStage1Digis_L1CaloRegionCollection_*_*", # keep unpacked region inputs
-        # "keep caloStage1Digis_*_CICADAScore_*" # keep cicada score
-
+        # "keep *"
+        "keep *_*_*_RECO", # keep miniaod contents
+        "keep L1CaloRegions_caloStage1Digis_*_*", # keep unpacked region inputs
+        "keep floatBXVector_*_CICADAScore_*" # keep cicada score
     ),
-    #SelectEvents = cms.untracked.PSet(
-       # SelectEvents = cms.vstring('NJetPath')
-    #)
+    SelectEvents = cms.untracked.PSet(
+        SelectEvents = cms.vstring('EventFilterPath')
+    )
 )
 
 process.skimStep = cms.EndPath(

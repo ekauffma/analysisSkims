@@ -24,11 +24,11 @@
 #include "TH2.h"
 
 
-class jetFilter: public edm::global::EDFilter<>
+class eventJetLeptonFilter: public edm::global::EDFilter<>
 {
     public: 
-        explicit jetFilter(const edm::ParameterSet&);
-        ~jetFilter() override = default;
+        explicit eventJetLeptonFilter(const edm::ParameterSet&);
+        ~eventJetLeptonFilter() override = default;
     
     private:
         void beginJob() override{};
@@ -45,7 +45,7 @@ class jetFilter: public edm::global::EDFilter<>
         TH1F* h_Selections;
 };
 
-jetFilter::jetFilter(const edm::ParameterSet& iConfig):
+eventJetLeptonFilter::eventJetLeptonFilter(const edm::ParameterSet& iConfig):
     objectSrc(consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>("objectSrc")))
 {
     slimmedElectronsToken_ = consumes< std::vector<pat::Electron> >(edm::InputTag("slimmedElectrons") );
@@ -57,7 +57,7 @@ jetFilter::jetFilter(const edm::ParameterSet& iConfig):
     h_Selections = fs->make<TH1F>("h_Selections", "h_Selections", 2, -0.5, 1.5 );
 }
 
-bool jetFilter::filter(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const
+bool eventJetLeptonFilter::filter(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const
 {
     using namespace edm;
 
@@ -81,4 +81,4 @@ bool jetFilter::filter(edm::StreamID, edm::Event& iEvent, const edm::EventSetup&
 
 }
 
-DEFINE_FWK_MODULE(jetFilter);
+DEFINE_FWK_MODULE(eventJetLeptonFilter);
