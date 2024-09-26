@@ -4,9 +4,16 @@ from Configuration.Eras.Era_Run3_2023_cff import Run3_2023
 
 import FWCore.ParameterSet.VarParsing as VarParsing
 options = VarParsing.VarParsing('analysis')
+options.register(
+    'isData',
+    False,
+    VarParsing.VarParsing.multiplicity.singleton,
+    VarParsing.VarParsing.varType.bool,
+    "Use data configuration options or not",
+)
 options.parseArguments()
 
-process = cms.Process("SKIM", Run3_2023)
+process = cms.Process("SKIM",Run3_2023)
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
@@ -18,27 +25,30 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    #input = cms.untracked.int32(options.maxEvents)
-    input = cms.untracked.int32(-1)
+    input = cms.untracked.int32(options.maxEvents)
 )
+
 process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 
-process.source = cms.Source("PoolSource",
-                            fileNames = cms.untracked.vstring(
-                                '/store/data/Run2024G/ZeroBias/MINIAOD/PromptReco-v1/000/384/661/00000/ddb41b82-7f9d-4ad3-a352-a869cefd0b74.root'
-                            ),
-                            secondaryFileNames = cms.untracked.vstring(
-                                '/store/data/Run2024G/ZeroBias/RAW/v1/000/384/661/00000/236961c6-1ec5-4a2c-9883-3d7fbc040743.root',
-                            )
+# Included in previous configurations to attempt to get rid of some warnings.
+process.MessageLogger.suppressWarning = cms.untracked.vstring(
+    'l1UpgradeTree',
+    'l1UpgradeEmuTree',
+    'l1UpgradeTfMuonShowerTree',
+    'emtfStage2Digis',
+    'l1uGTTestcrateTree',
+    'simDtTriggerPrimitiveDigis'
 )
 
-process.TFileService = cms.Service("TFileService",
-                                       fileName = cms.string('filterResults.root')
-                                   )
+process.source = cms.Source("PoolSource",
+                            fileNames = cms.untracked.vstring('/store/data/Run2024G/ZeroBias/RAW/v1/000/384/661/00000/236961c6-1ec5-4a2c-9883-3d7fbc040743.root'),
+)
 
 process.options = cms.untracked.PSet(
+    # FailPath = cms.untracked.vstring(),
     IgnoreCompletely = cms.untracked.vstring(),
     Rethrow = cms.untracked.vstring(),
+    # SkipEvent = cms.untracked.vstring(),
     allowUnscheduled = cms.obsolete.untracked.bool,
     canDeleteEarly = cms.untracked.vstring(),
     deleteNonConsumedUnscheduledModules = cms.untracked.bool(True),
@@ -63,38 +73,21 @@ process.options = cms.untracked.PSet(
     wantSummary = cms.untracked.bool(False)
 )
 
-process.schedule = cms.Schedule()
-
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
 
 process.raw2digi_step = cms.Path(process.RawToDigi)
-process.schedule.append(process.raw2digi_step)
-
-#from anomalyDetection.analysisSkims.jetFilter_cfi import jetFilter
-#process.jetFilter = jetFilter
-#process.NJetPath = cms.Path(process.jetFilter)
-#process.schedule.append(process.NJetPath)
+process.schedule = cms.Schedule(process.raw2digi_step)
 
 process.skimOutput = cms.OutputModule(
     'PoolOutputModule',
     fileName = cms.untracked.string(options.outputFile),
-    outputCommands=cms.untracked.vstring(
-        "keep *"
-        # "keep *_*_*_RECO", # keep miniaod contents
-        # "keep caloStage1Digis_L1CaloRegionCollection_*_*", # keep unpacked region inputs
-        # "keep caloStage1Digis_*_CICADAScore_*" # keep cicada score
-
-    ),
-    #SelectEvents = cms.untracked.PSet(
-       # SelectEvents = cms.vstring('NJetPath')
-    #)
+    outputCommands=cms.untracked.vstring("keep *"),
 )
 
-process.skimStep = cms.EndPath(
-    process.skimOutput
-)
+process.skimStep = cms.EndPath(process.skimOutput)
 process.schedule.append(process.skimStep)
+
 
 print("schedule:")
 print(process.schedule)

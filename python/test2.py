@@ -18,23 +18,16 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    #input = cms.untracked.int32(options.maxEvents)
-    input = cms.untracked.int32(-1)
+        input = cms.untracked.int32(options.maxEvents)
+
 )
 process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
-                                '/store/data/Run2024G/ZeroBias/MINIAOD/PromptReco-v1/000/384/661/00000/ddb41b82-7f9d-4ad3-a352-a869cefd0b74.root'
-                            ),
-                            secondaryFileNames = cms.untracked.vstring(
-                                '/store/data/Run2024G/ZeroBias/RAW/v1/000/384/661/00000/236961c6-1ec5-4a2c-9883-3d7fbc040743.root',
+                                "/store/data/Run2024G/ZeroBias/RAW/v1/000/384/661/00000/236961c6-1ec5-4a2c-9883-3d7fbc040743.root"
                             )
 )
-
-process.TFileService = cms.Service("TFileService",
-                                       fileName = cms.string('filterResults.root')
-                                   )
 
 process.options = cms.untracked.PSet(
     IgnoreCompletely = cms.untracked.vstring(),
@@ -61,38 +54,36 @@ process.options = cms.untracked.PSet(
     sizeOfStackForThreadsInKB = cms.optional.untracked.uint32,
     throwIfIllegalParameter = cms.untracked.bool(True),
     wantSummary = cms.untracked.bool(False)
+
 )
 
 process.schedule = cms.Schedule()
 
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_Prompt_v4', '')
 
 process.raw2digi_step = cms.Path(process.RawToDigi)
 process.schedule.append(process.raw2digi_step)
 
-#from anomalyDetection.analysisSkims.jetFilter_cfi import jetFilter
-#process.jetFilter = jetFilter
-#process.NJetPath = cms.Path(process.jetFilter)
-#process.schedule.append(process.NJetPath)
+from L1Trigger.Configuration.customiseReEmul import L1TReEmulFromRAW
+
+#call to customisation function L1TReEmulFromRAW imported from L1Trigger.Configuration.customiseReEmul
+process = L1TReEmulFromRAW(process)
+
+# Automatic addition of the customisation function from L1Trigger.Configuration.customiseReEmul
+from L1Trigger.Configuration.customiseReEmul import L1TReEmulFromRAW
 
 process.skimOutput = cms.OutputModule(
     'PoolOutputModule',
     fileName = cms.untracked.string(options.outputFile),
     outputCommands=cms.untracked.vstring(
-        "keep *"
-        # "keep *_*_*_RECO", # keep miniaod contents
-        # "keep caloStage1Digis_L1CaloRegionCollection_*_*", # keep unpacked region inputs
-        # "keep caloStage1Digis_*_CICADAScore_*" # keep cicada score
-
+        "keep *",
     ),
-    #SelectEvents = cms.untracked.PSet(
-       # SelectEvents = cms.vstring('NJetPath')
-    #)
 )
 
 process.skimStep = cms.EndPath(
-    process.skimOutput
+        process.skimOutput
+
 )
 process.schedule.append(process.skimStep)
 

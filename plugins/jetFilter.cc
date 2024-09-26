@@ -9,12 +9,19 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 
 #include <string>
+
+#include "TLorentzVector.h"
+#include "TROOT.h"
+#include "TTree.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TH2.h"
 
 
 class jetFilter: public edm::global::EDFilter<>
@@ -34,6 +41,8 @@ class jetFilter: public edm::global::EDFilter<>
 
         int nJetThreshold;
         int nLeptonThreshold;
+
+        TH1F* h_Selections;
 };
 
 jetFilter::jetFilter(const edm::ParameterSet& iConfig):
@@ -44,6 +53,8 @@ jetFilter::jetFilter(const edm::ParameterSet& iConfig):
     nJetThreshold = 1;
     nLeptonThreshold = 1;
 
+    edm::Service<TFileService> fs;
+    h_Selections = fs->make<TH1F>("h_Selections", "h_Selections", 2, -0.5, 1.5 );
 }
 
 bool jetFilter::filter(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const
@@ -61,7 +72,12 @@ bool jetFilter::filter(edm::StreamID, edm::Event& iEvent, const edm::EventSetup&
     float nElectrons = slimmedElectrons->size();
     float nMuons = slimmedMuons->size();
 
-    return ((nJets >= (int)nJetThreshold) || ((nElectrons + nMuons) >= (int)nLeptonThreshold));
+    bool filterResult = ((nJets >= (int)nJetThreshold) || ((nElectrons + nMuons) >= (int)nLeptonThreshold));
+
+    if (filterResult) h_Selections->Fill(1.0);
+    else h_Selections->Fill(0.0);
+
+    return filterResult;
 
 }
 
